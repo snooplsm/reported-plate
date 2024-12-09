@@ -1,6 +1,6 @@
 {
   "name": "yolov8-seg-onnxruntime-web",
-  "homepage": "https://hyuto.github.io/yolov8-seg-onnxruntime-web/",
+  "homepage": "https://snooplsm.github.io/reported-plate",
   "version": "0.1.0",
   "dependencies": {
     "@techstark/opencv-js": "4.5.5-release.2",
@@ -12,7 +12,8 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "predeploy": "npm run build"
   },
   "eslintConfig": {
     "extends": [

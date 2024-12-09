@@ -64,9 +64,9 @@ const App = () => {
         </Loader>
       )}
       <div className="header">
-        <h1>YOLOv8 Object Segmentation App</h1>
+        <h1>Reported.nyc v12 Segmentation Model for tlc identification and blocked bike lane and crosswalks</h1>
         <p>
-          YOLOv8 object detection application live on browser powered by{" "}
+          Trained on data submitted to 311 nyc{" "}
           <code>onnxruntime-web</code>
         </p>
         <p>
