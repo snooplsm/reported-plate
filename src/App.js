@@ -16,10 +16,11 @@ const App = () => {
 
   // configs
   // const modelName = "yolov8n-seg.onnx";
-  const modelName = "reported-best.onnx"
+  // const modelName = "reported-best.onnx"
+  const modelName = "reported-v13-optimized.onnx"
   const modelInputShape = [1, 3, 512, 512];
   const topk = 100;
-  const iouThreshold = 0.45;
+  const iouThreshold = 0.5;
   const scoreThreshold = 0.25;
 
   // wait until opencv.js initialized

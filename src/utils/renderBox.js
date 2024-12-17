@@ -6,8 +6,8 @@
 export const renderBoxes = (ctx, boxes) => {
   // font configs
   const font = `${Math.max(
-    Math.round(Math.max(ctx.canvas.width, ctx.canvas.height) / 40),
-    14
+    Math.round(Math.max(ctx.canvas.width, ctx.canvas.height) / 45),
+    12
   )}px Arial`;
   ctx.font = font;
   ctx.textBaseline = "top";
@@ -45,8 +45,8 @@ export class Colors {
   // ultralytics color palette https://ultralytics.com/
   constructor() {
     this.palette = [
-      "#FF3838",
-      "#FF9D97",
+      "#3F1651",
+      "#F89F5B",
       "#FF701F",
       "#FFB21D",
       "#CFD231",
