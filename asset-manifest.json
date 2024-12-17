@@ -1,17 +1,17 @@
 {
   "files": {
     "main.css": "/reported-plate/static/css/main.86524d2f.css",
-    "main.js": "/reported-plate/static/js/main.eb623961.js",
+    "main.js": "/reported-plate/static/js/main.09d8d37c.js",
     "static/js/ort-wasm-simd.wasm": "/reported-plate/static/js/ort-wasm-simd.wasm",
     "static/js/ort-wasm-simd-threaded.wasm": "/reported-plate/static/js/ort-wasm-simd-threaded.wasm",
     "static/js/ort-wasm.wasm": "/reported-plate/static/js/ort-wasm.wasm",
     "static/js/ort-wasm-threaded.wasm": "/reported-plate/static/js/ort-wasm-threaded.wasm",
     "index.html": "/reported-plate/index.html",
     "main.86524d2f.css.map": "/reported-plate/static/css/main.86524d2f.css.map",
-    "main.eb623961.js.map": "/reported-plate/static/js/main.eb623961.js.map"
+    "main.09d8d37c.js.map": "/reported-plate/static/js/main.09d8d37c.js.map"
   },
   "entrypoints": [
     "static/css/main.86524d2f.css",
-    "static/js/main.eb623961.js"
+    "static/js/main.09d8d37c.js"
   ]
 }
