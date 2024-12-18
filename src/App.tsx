@@ -46,6 +46,22 @@ const App = () => {
     }
   };
 
+  // Handle drag over event to allow drop
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  // Handle drop event to handle dropped files
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      changeImage(file);
+    }
+  };
+
   const changeImage = (url) => {
     if (image) {
       // Revoke the previous object URL if it was set
@@ -107,7 +123,10 @@ const App = () => {
   };
 
   return (
-    <div className="App">
+    <div className="App"
+        onDragOver={handleDragOver} // Allow drag over the button
+          onDrop={handleDrop} // Handle dropped files
+    >
       <div className="header">
         <h1>Reported.nyc v12 Segmentation Model for tlc identification and blocked bike lane and crosswalks</h1>
         <p>
