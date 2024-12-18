@@ -26,11 +26,19 @@
   border-radius: 5px;
 }
 
-.content > img {
+.content > img.subject {
   width: 100%;
   max-width: 720px;
   max-height: 500px;
   border-radius: 10px;
+}
+
+.thumb {
+  width: 128px;  
+  height: 128px;
+  border-radius: 40px;
+  padding-left: 5px;
+  padding-right: 5px;
 }
 
 .content {
@@ -60,4 +68,21 @@ button:hover {
   color: black;
   background-color: white;
   border: 2px solid black;
+}
+
+a {
+  /* text-decoration: none; */
+  /* color: white; */
+  /* background-color: black; */
+  /* border: 2px solid black; */
+  /* margin: 0 5px; */
+  /* padding: 5px; */
+  /* border-radius: 5px; */
+  cursor: pointer;
+}
+
+a:hover {
+  color: black;
+  /* background-color: white; */
+  /* border: 2px solid black; */
 }

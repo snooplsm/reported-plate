@@ -13,7 +13,9 @@
     "start": "craco start",
     "build": "craco build",
     "deploy": "gh-pages -d build",
-    "predeploy": "npm run build"
+    "predeploy": "npm run build",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "type-check": "tsc --noEmit"
   },
   "eslintConfig": {
     "extends": [
@@ -47,7 +49,12 @@
   },
   "devDependencies": {
     "@craco/craco": "^7.1.0",
+    "@types/node": "^20.17.10",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
     "copy-webpack-plugin": "^11.0.0",
-    "gh-pages": "^4.0.0"
+    "eslint": "^8.40.0",
+    "gh-pages": "^4.0.0",
+    "typescript": "^5.7.2"
   }
 }

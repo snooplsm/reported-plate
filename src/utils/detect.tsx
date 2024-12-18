@@ -13,6 +13,18 @@ const plates = ['ny', 'pa', 'nj', 'ct', 'md', 'nc', 'tlc']
 const taxi = ['tlc', 'medallion'];
 const bonus = ['bullbars'];
 
+    
+interface DetectBox {
+  label: string,
+  index: number,
+  probability: number,
+  data: any
+  bounding: [x:number, y:number, w:number, h:number],
+  box: [x:number, y:number, w:number, h:number]
+  mask: any,
+  color: string
+}
+
 console.log(infractions)
 /**
  * Detect Image
@@ -31,7 +43,8 @@ export const detectImage = async (
   topk,
   iouThreshold,
   scoreThreshold,
-  inputShape
+  inputShape,
+  determined
 ) => {
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // clean canvas
@@ -53,7 +66,7 @@ export const detectImage = async (
   const { output0, output1 } = await session.net.run({ images: tensor }); // run session and get output layer. out1: detect layer, out2: seg layer
   const { selected } = await session.nms.run({ detection: output0, config: config }); // perform nms and filter boxes
 
-  const boxes = []; // ready to draw boxes
+  const boxes:DetectBox[] = []; // ready to draw boxes
   let overlay = new Tensor("uint8", new Uint8Array(modelHeight * modelWidth * 4), [
     modelHeight,
     modelWidth,
@@ -97,23 +110,14 @@ export const detectImage = async (
 
     boxes.push({
       label: labels[label],
+      index: label,
       probability: score,
       color: color,
+      data: data,
+      mask: data.slice(4 + numClass),
       bounding: [x, y, w, h], // upscale box
+      box: box
     }); // update boxes to draw later
-
-    boxes.sort((a, b) => {
-      const areaA = a.bounding[2] * a.bounding[3]; // Width * Height of box A
-      const areaB = b.bounding[2] * b.bounding[3]; // Width * Height of box B
-      
-      const scoreA = a.probability * areaA; // Combined score for box A
-      const scoreB = b.probability * areaB; // Combined score for box B
-    
-      return scoreB - scoreA; // Sort in descending order
-    });
-
-    console.log(boxes)
-    
 
     const mask = new Tensor(
       "float32",
@@ -130,7 +134,7 @@ export const detectImage = async (
         y, // upscale y
         w, // upscale width
         h, // upscale height
-        ...Colors.hexToRgba(color, 120), // color in RGBA
+        ...colors.hexToRgba(color, 120), // color in RGBA
       ])
     ); // mask config
     const { mask_filter } = await session.mask.run({
@@ -142,11 +146,117 @@ export const detectImage = async (
 
     overlay = mask_filter; // update overlay with the new one
   }
+
+  boxes.sort((a, b) => {
+    const areaA = a.bounding[2] * a.bounding[3]; // Width * Height of box A
+    const areaB = b.bounding[2] * b.bounding[3]; // Width * Height of box B
+    
+    const scoreA = a.probability * areaA; // Combined score for box A
+    const scoreB = b.probability * areaB; // Combined score for box B
+  
+    return scoreB - scoreA; // Sort in descending order
+  });
+
+  console.log(boxes)
   
   const mask_img = new ImageData(new Uint8ClampedArray(overlay.data), modelHeight, modelWidth); // create image data from mask overlay
+  const colorCounts = new Map(); // Map to store color and its count
+  const data = mask_img.data; // Pixel data (RGBA values)
   
-  // saveSegmentedImage(ctx, image,overlay,modelHeight,modelWidth, xRatio, yRatio)
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];       // Red
+    const g = data[i + 1];   // Green
+    const b = data[i + 2];   // Blue
+    const a = data[i + 3];   // Alpha
+  
+    // Combine RGBA into a string (e.g., "r,g,b,a")
+    const color = [r,g,b,a]
+    const hex = colors.toHex(color)
+    // Increment count of the color in the Map
+    if (colorCounts.has(hex)) {
+      colorCounts.set(hex, colorCounts.get(hex) + 1);
+    } else {
+      colorCounts.set(hex, 1);
+    }
+  }
 
+  // saveOverlayAsImage(mask_img, modelWidth, modelHeight)
+  
+  // Log the unique colors and their counts
+  console.log("Unique Colors and Counts:");
+  colorCounts.forEach((count, color) => {
+    const _label = colors.toIndex(color)
+    const label = _label!=-1 && labels[_label]
+    console.log(`${label}: ${color}, Count: ${count}`);
+  });
+  // saveSegmentedImage(ctx, image,overlay,modelHeight,modelWidth, xRatio, yRatio)
+  const firstInfractionBox = boxes.find(box => infractions.includes(box.label));
+  const firstPlate = boxes.find(box => plates.includes(box.label))
+  const tlcOrTaxi = boxes.find(box=>taxi.includes(box.label))
+
+  if(firstPlate) {
+    // console.log(firstPlate.box)
+    // console.log(firstPlate.bounding)
+    // console.log(firstPlate.label)
+    // console.log(xRatio, " y ratio", yRatio, "prob", firstPlate.probability)
+    // let overlay = new Tensor("uint8", new Uint8Array(modelHeight * modelWidth * 4), [
+    //   modelHeight,
+    //   modelWidth,
+    //   4,
+    // ]); // create overlay to draw segmentation object
+    // const box = firstPlate.box
+    // const data = firstPlate.data
+    // const mask = new Tensor(
+    //   "float32",
+    //   new Float32Array([
+    //     ...box, // original scale box
+    //     ...data.slice(4 + numClass), // mask data
+    //   ])
+    // ); // mask input
+    // const maskConfig = new Tensor(
+    //   "float32",
+    //   new Float32Array([
+    //     maxSize,
+    //     box[0], // upscale x
+    //     box[1], // upscale y
+    //     box[2], // upscale width
+    //     box[3], // upscale height
+    //     ...colors.hexToRgba(firstPlate.color, 140), // color in RGBA
+    //   ])
+    // ); // mask config
+  // const { mask_filter } = await session.mask.run({
+  //     detection: mask,
+  //     mask: output1,
+  //     config: maskConfig,
+  //     overlay: overlay,
+  //   });
+    // const mask_img = new ImageData(new Uint8ClampedArray(mask_filter.data), modelHeight, modelWidth);
+    // ctx.putImageData(mask_img, 0, 0); // put overlay to canvas
+    // saveOverlayAsImage(mask_filter,modelWidth,modelHeight)
+  // const img = new Image()
+  // img.src = image.src
+  // img.onload = function() {
+  //   console.log("orig image size", img.width, img.height)
+  //   const overlayImgData = new ImageData(
+  //     new Uint8ClampedArray(mask_filter.data),
+  //     modelWidth,
+  //     modelHeight
+  //   );
+    // const mask = resizeImageData(overlayImgData, img.width, img.height)
+    // saveOverlay(mask)
+    // saveOverlayAsImage()
+    // copyAndSaveMaskedPixels(img, mask_filter, modelWidth, modelHeight)
+    // copyPixelsFromMask(img, mask_filter, modelWidth, modelHeight, xRatio, yRatio)
+    // saveSegmentedImage(img, mask_filter, modelHeight,modelWidth, firstPlate.box, xRatio, yRatio)
+    
+    // renderBoxes(ctx, boxes); // draw boxes after overlay added to canvas
+
+    // input.delete(); // delete unused Mat
+  // }
+  }
+
+  console.log("infraction is:",firstInfractionBox?.label,"plate is", firstPlate?.label, "taxi?", tlcOrTaxi!=null)
+  console.log("mask size is", mask_img.width, mask_img.height)
   ctx.putImageData(mask_img, 0, 0); // put overlay to canvas
   // TODO RESTORE
   // const link = document.createElement("a");
@@ -155,7 +265,7 @@ export const detectImage = async (
   // link.click();
 
   console.log(image.width, image.height, modelWidth, modelHeight)
-
+  
   // const img = new Image()
   // img.src = image.src
   // img.onload = function() {
@@ -171,104 +281,6 @@ export const detectImage = async (
   
 };
 
-function copyPixelsFromMask(image, overlay, modelWidth, modelHeight) {
-  // Create a canvas for the scaled mask
-  const maskCanvas = document.createElement("canvas");
-  const maskCtx = maskCanvas.getContext("2d");
-  maskCanvas.width = image.width;
-  maskCanvas.height = image.height;
-
-  // Create a canvas for the original mask (model size)
-  const originalMaskCanvas = document.createElement("canvas");
-  const originalMaskCtx = originalMaskCanvas.getContext("2d");
-  originalMaskCanvas.width = modelWidth;
-  originalMaskCanvas.height = modelHeight;
-
-  // Create ImageData from the overlay tensor
-  const maskImgData = new ImageData(
-    new Uint8ClampedArray(overlay.data),
-    modelWidth,
-    modelHeight
-  );
-
-  // Draw the mask on the original mask canvas
-  originalMaskCtx.putImageData(maskImgData, 0, 0);
-
-  // Scale the mask to match the original image dimensions
-  maskCtx.drawImage(
-    originalMaskCanvas,
-    0, 0, modelWidth, modelHeight, // Source dimensions
-    0, 0, image.width, image.height // Destination dimensions
-  );
-
-  // Get the scaled mask data
-  const scaledMaskData = maskCtx.getImageData(0, 0, image.width, image.height);
-
-  // Create a canvas for the result
-  const resultCanvas = document.createElement("canvas");
-  const resultCtx = resultCanvas.getContext("2d");
-  resultCanvas.width = image.width;
-  resultCanvas.height = image.height;
-
-  // Get the original image data
-  const imageCtx = document.createElement("canvas").getContext("2d");
-  imageCtx.canvas.width = image.width;
-  imageCtx.canvas.height = image.height;
-  imageCtx.drawImage(image, 0, 0);
-  const originalImageData = imageCtx.getImageData(0, 0, image.width, image.height);
-
-  // Create a new ImageData object for the result
-  const resultImageData = resultCtx.createImageData(image.width, image.height);
-
-  // Copy only the pixels within the mask
-  for (let i = 0; i < scaledMaskData.data.length; i += 4) {
-    if (scaledMaskData.data[i + 3] > 0) { // Check if mask pixel is not transparent
-      resultImageData.data[i] = originalImageData.data[i];     // Red
-      resultImageData.data[i + 1] = originalImageData.data[i + 1]; // Green
-      resultImageData.data[i + 2] = originalImageData.data[i + 2]; // Blue
-      resultImageData.data[i + 3] = originalImageData.data[i + 3]; // Alpha
-    } else {
-      // Set transparent for pixels outside the mask
-      resultImageData.data[i] = 0;
-      resultImageData.data[i + 1] = 0;
-      resultImageData.data[i + 2] = 0;
-      resultImageData.data[i + 3] = 0;
-    }
-  }
-
-  // Put the result data back onto the canvas
-  resultCtx.putImageData(resultImageData, 0, 0);
-
-  // Save the final result as a PNG
-  const link = document.createElement("a");
-  link.download = "masked_pixels.png";
-  link.href = resultCanvas.toDataURL("image/png");
-  link.click();
-}
-
-// Helper function to calculate bounding box of the mask
-function calculateBoundingBox(maskData, width, height) {
-  let minX = width, minY = height, maxX = 0, maxY = 0;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const alpha = maskData[(y * width + x) * 4 + 3];
-      if (alpha > 0) {
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-      }
-    }
-  }
-
-  return {
-    x: minX,
-    y: minY,
-    width: maxX - minX + 1,
-    height: maxY - minY + 1,
-  };
-}
-
 /**
  * Preprocessing image
  * @param {HTMLImageElement} source image source
@@ -277,7 +289,7 @@ function calculateBoundingBox(maskData, width, height) {
  * @param {Number} stride model stride
  * @return preprocessed image and configs
  */
-const preprocessing = (source, modelWidth, modelHeight, stride = 32) => {
+const preprocessing = (source:HTMLImageElement, modelWidth:number, modelHeight:number, stride = 32):[cv.Mat,number,number] =>  {
   const mat = cv.imread(source); // read from img tag
   const matC3 = new cv.Mat(mat.rows, mat.cols, cv.CV_8UC3); // new image matrix
   cv.cvtColor(mat, matC3, cv.COLOR_RGBA2BGR); // RGBA to BGR
@@ -311,6 +323,33 @@ const preprocessing = (source, modelWidth, modelHeight, stride = 32) => {
   return [input, xRatio, yRatio];
 };
 
+function resizeImageData(overlayImgData, newWidth, newHeight) {
+  // Create a canvas to draw and resize the image
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  // Set the canvas size to the new dimensions
+  canvas.width = newWidth;
+  canvas.height = newHeight;
+  
+  // Create an off-screen image (ImageData) with the new size
+  const newImageData = ctx.createImageData(newWidth, newHeight);
+  
+  // Create a temporary image element from the original ImageData
+  const tempCanvas = document.createElement('canvas');
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCanvas.width = overlayImgData.width;
+  tempCanvas.height = overlayImgData.height;
+  tempCtx.putImageData(overlayImgData, 0, 0);
+  
+  // Use the canvas drawImage method to resize the image using bilinear interpolation
+  ctx.drawImage(tempCanvas, 0, 0, overlayImgData.width, overlayImgData.height, 0, 0, newWidth, newHeight);
+  
+  // Get the resized image data
+  const resizedImageData = ctx.getImageData(0, 0, newWidth, newHeight);
+  
+  return resizedImageData;
+}
 /**
  * Get divisible image size by stride
  * @param {Number} stride

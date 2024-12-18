@@ -42,39 +42,50 @@ export const renderBoxes = (ctx, boxes) => {
 };
 
 export class Colors {
+  palette: string[];
+  n: number;
   // ultralytics color palette https://ultralytics.com/
   constructor() {
     this.palette = [
-      "#3F1651",
-      "#F89F5B",
-      "#FF701F",
-      "#FFB21D",
-      "#CFD231",
-      "#48F90A",
-      "#92CC17",
-      "#3DDB86",
-      "#1A9334",
-      "#00D4BB",
-      "#2C99A8",
-      "#00C2FF",
+      "#3f1651",
+      "#f89f5b",
+      "#ff701f",
+      "#ffb21d",
+      "#cfd231",
+      "#48f90a",
+      "#92cc17",
+      "#3ddb86",
+      "#1a9334",
+      "#00d4bb",
+      "#2c99a8",
+      "#00c2ff",
       "#344593",
-      "#6473FF",
-      "#0018EC",
-      "#8438FF",
+      "#6473ff",
+      "#0018ec",
+      "#8438ff",
       "#520085",
-      "#CB38FF",
-      "#FF95C8",
-      "#FF37C7",
+      "#cb38ff",
+      "#ff95c8",
+      "#ff37c7",
     ];
+    
     this.n = this.palette.length;
   }
 
   get = (i) => this.palette[Math.floor(i) % this.n];
 
-  static hexToRgba = (hex, alpha) => {
-    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16), alpha]
-      : null;
+  hexToRgba = (hex, alpha):[number,number,number,number] => {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)!;
+    return [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16), alpha]
+  };
+
+  toHex = (rgba) => {
+    const [r,g,b] = rgba
+    const hex = "#" + [r, g, b].map(value => value.toString(16).padStart(2, "0")).join("")
+    return hex
+  }
+
+  toIndex = (hex) => {    
+    return this.palette.indexOf(hex)
   };
 }
