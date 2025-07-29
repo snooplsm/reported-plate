@@ -128,7 +128,7 @@ const App = () => {
           onDrop={handleDrop} // Handle dropped files
     >
       <div className="header">
-        <h1>Reported.nyc v12 Segmentation Model for tlc identification and blocked bike lane and crosswalks</h1>
+        <h1>Reported.nyc Segmentation Model for tlc identification and blocked bike lane and crosswalks</h1>
         <p>
           Trained on data submitted to 311 nyc{" "}
           <code>onnxruntime-web</code>
